@@ -1,0 +1,14 @@
+LOAD CSV WITH HEADERS FROM 'http://localhost:11001/project-b60e3b5c-0aad-4d7c-add9-252718e00029/spotify_cypher.csv' as line
+merge(l:Likes {artists:line.artists, album_name:line.album_name, track_name:line.track_name, popularity:line.popularity, danceability:line.danceability, energy:line.energy, loudness:line.loudness, speechiness:line.speechiness, acousticness:line.acousticness, instrumentalness:line.instrumentalness, liveness:line.liveness, valence:line.valence, tempo:line.tempo, track_genre:line.track_genre})
+merge(r:Recommends {track_name:line.recom_track_name, popularity:line.recom_popularity, danceability:line.recom_danceability, energy:line.recom_energy, loudness:line.recom_loudness, speechiness:line.recom_speechiness, acousticness:line.recom_acousticness, instrumentalness:line.recom_instrumentalness, liveness:line.recom_liveness, valence:line.recom_valence, tempo:line.recom_tempo, track_genre:line.recom_track_genre})
+merge(al:Album {album_name:line.recom_album_name})
+merge(ar:Artist {artists:line.recom_artists})
+merge (l)-[:Relates {euclidean_score:line.euclidean_distance}]->(r)
+merge (ar)-[:Sang]->(r)
+merge (al)-[:IsIn]->(r)
+
+match (l:Likes)-[rr:Relates]->(r:Recommends)
+match (ar:Artist)-[:Sang]->(r)
+match (al:Album)-[:IsIn]->(r)
+return l, rr, r, ar, al
+order by rr.euclidean_score limit 5
